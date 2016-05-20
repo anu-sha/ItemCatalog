@@ -1,0 +1,53 @@
+<html>
+<head>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="table header">
+<div class="table-cell categories"><h1>Catalog App</h1></div>
+<div class="table-cell items right">
+ {% if loggedIn %}
+	<a class="login" href="{{url_for('logout')}}">Logout</a>
+ {% else %}
+        <a class="login" href="{{url_for('showLoginPage')}}">Login</a>
+ {% endif %} 
+</div>
+</div>
+
+<!--MESSAGE FLASHING EXAMPLE -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+
+<ul>
+{% for message in messages %}
+  <li><strong>{{message}}</strong></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
+
+<div class="table content">
+<div class="categories table-cell">
+	<h2>Categories</h2>
+{% for category in categories %}
+	<div class='category'><a href="{{url_for('showCategoryItems',category_title=category.name)}}">{{category.name}}</a></div>
+
+{% endfor %}
+</div>
+
+<div class="items table-cell">
+{% if loggedIn %}
+  <div><a href="{{url_for('addItem')}}">Add Item</a>
+{% endif %}
+	<h2>Latest Items</h2>
+{% for item in items %}
+	<div>{{item.name}} ({{item.category.name}})</div>
+
+{% endfor %}
+</div>
+</div>
+</body>
+
+</html>
