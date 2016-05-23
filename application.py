@@ -288,7 +288,6 @@ def editItem(item_title):
             #once item has been saved redirect back to the view showing the category items
             return redirect(url_for('showCategoryItems',category_title=item.category.name))
         else:
-            print item
             return render_template('itemedit.html', categories=categories, item=item,category=item.category, loggedIn=loggedIn, error="You are not authorized to edit this record")
     else:
         #get all categories to pass to the template
