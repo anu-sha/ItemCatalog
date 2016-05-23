@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 
 Base=declarative_base()
 
-#User class for maintaining users data if we need to extend the app to allow only owners edit/delete items
+#User class for maintaining users data 
 class User(Base):
     __tablename__='user'
     id=Column(Integer, primary_key=True)
