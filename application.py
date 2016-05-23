@@ -108,6 +108,13 @@ def gconnect():
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
+
+    # see if user exists, if it doesn't make a new one
+    user_id = getUserID(data["email"])
+    if not user_id:
+        user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+
     
     #create the output string
     output = ''
@@ -119,6 +126,28 @@ def gconnect():
     output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("You are now logged in as %s" % login_session['username'])
     return output
+
+#user functions
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+#get user info from id
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+#get userid from email
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
 
 
 @app.route('/')
@@ -208,7 +237,8 @@ def addItem():
             #check if category is selected
             if category_id is not None:
                 category=session.query(Category).filter_by(id=category_id).one()
-                item=Item(name=name,description=description,category=category)
+                #add item
+                item=Item(name=name,description=description,category=category, user_id=login_session['user_id'])
                 session.add(item)
                 session.commit()
                 return redirect(url_for('showCategoryItems',category_title=category.name))
@@ -231,6 +261,8 @@ def addItem():
 def editItem(item_title):
     #get the item with the name passe
     item=session.query(Item).filter_by(name=item_title).one()
+    #get all categories to pass to the template
+    categories=session.query(Category).all() 
     #pass in if user is logged in or not
     if 'username' in login_session:
         loggedIn=True
@@ -239,7 +271,9 @@ def editItem(item_title):
     #check if it is a post request
     #item should be saved if it is a post , the form should be displayed if it is a get request
     if request.method=='POST':
-        if loggedIn:
+        #check of user is logged in and the user is the owner of the item
+        if loggedIn and item.user_id == login_session['user_id']:
+       
             #if a value has been entered for the item name
             if request.form['name']:
                 item.name=request.form['name']
@@ -254,7 +288,8 @@ def editItem(item_title):
             #once item has been saved redirect back to the view showing the category items
             return redirect(url_for('showCategoryItems',category_title=item.category.name))
         else:
-            render_template('itemedit.html', categories=categories, category=item.category, loggedIn=loggedIn, error="You are not authorized to edit this record")
+            print item
+            return render_template('itemedit.html', categories=categories, item=item,category=item.category, loggedIn=loggedIn, error="You are not authorized to edit this record")
     else:
         #get all categories to pass to the template
         categories=session.query(Category).all()
@@ -276,7 +311,7 @@ def deleteItem(item_title):
     #check if it is a post request
     #item should be deleted if it is a post , the form should be displayed if it is a get request
     if request.method=='POST':
-        if loggedIn:
+        if loggedIn and item.user_id == login_session['user_id']:
            #delete the item
             #get the categoryname before the item is deleted
             categoryname=item.category.name
